@@ -1,0 +1,41 @@
+_wandb:
+    value:
+        cli_version: 0.25.1
+        e:
+            f5il9fdtpb7kt5gjkery2x442bgn8id4:
+                codePath: smoke_test.py
+                codePathLocal: smoke_test.py
+                email: sinem.erisken@gmail.com
+                executable: /Users/oshun/Documents/GitHub/bimpala_modulararithmetic/Bimpala_ModularArithmetic/.venv/bin/python
+                git:
+                    commit: 3f85d9df441388ef21c2a5a00eb69576a4c05385
+                host: Hyrule.local
+                os: macOS-26.4-arm64-arm-64bit
+                program: /Users/oshun/Documents/GitHub/bimpala_modulararithmetic/Bimpala_ModularArithmetic/smoke_test.py
+                python: CPython 3.12.3
+                root: /Users/oshun/Documents/GitHub/bimpala_modulararithmetic/Bimpala_ModularArithmetic
+                startedAt: "2026-03-27T17:24:34.106917Z"
+                writerId: f5il9fdtpb7kt5gjkery2x442bgn8id4
+        m: []
+        python_version: 3.12.3
+        t:
+            "1":
+                - 1
+            "2":
+                - 1
+            "3":
+                - 2
+                - 13
+                - 15
+                - 16
+                - 62
+            "4": 3.12.3
+            "5": 0.25.1
+            "12": 0.25.1
+            "13": darwin-arm64
+"N":
+    value: 4
+q:
+    value: 17
+smoke:
+    value: true

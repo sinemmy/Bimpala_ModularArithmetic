@@ -1,0 +1,51 @@
+_wandb:
+    value:
+        cli_version: 0.25.1
+        e:
+            7kawodkw4uqxvhipeq7izh1n0wrguden:
+                apple: {}
+                codePath: smoke_test.py
+                codePathLocal: smoke_test.py
+                cpu_count: 12
+                cpu_count_logical: 12
+                disk:
+                    /:
+                        total: "994662584320"
+                        used: "258182983680"
+                email: sinem.erisken@gmail.com
+                executable: /Users/oshun/Documents/GitHub/bimpala_modulararithmetic/Bimpala_ModularArithmetic/.venv/bin/python
+                git:
+                    commit: 3f85d9df441388ef21c2a5a00eb69576a4c05385
+                host: Hyrule.local
+                memory:
+                    total: "19327352832"
+                os: macOS-26.4-arm64-arm-64bit
+                program: /Users/oshun/Documents/GitHub/bimpala_modulararithmetic/Bimpala_ModularArithmetic/smoke_test.py
+                python: CPython 3.12.3
+                root: /Users/oshun/Documents/GitHub/bimpala_modulararithmetic/Bimpala_ModularArithmetic
+                startedAt: "2026-03-27T17:24:36.329283Z"
+                writerId: 7kawodkw4uqxvhipeq7izh1n0wrguden
+        m: []
+        python_version: 3.12.3
+        t:
+            "1":
+                - 1
+            "2":
+                - 1
+            "3":
+                - 2
+                - 13
+                - 15
+                - 16
+            "4": 3.12.3
+            "5": 0.25.1
+            "12": 0.25.1
+            "13": darwin-arm64
+"N":
+    value: 4
+model:
+    value: ReluModular
+q:
+    value: 17
+smoke:
+    value: true

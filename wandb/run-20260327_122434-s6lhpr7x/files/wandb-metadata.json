@@ -1,0 +1,16 @@
+{
+  "os": "macOS-26.4-arm64-arm-64bit",
+  "python": "CPython 3.12.3",
+  "startedAt": "2026-03-27T17:24:34.106917Z",
+  "program": "/Users/oshun/Documents/GitHub/bimpala_modulararithmetic/Bimpala_ModularArithmetic/smoke_test.py",
+  "codePath": "smoke_test.py",
+  "codePathLocal": "smoke_test.py",
+  "git": {
+    "commit": "3f85d9df441388ef21c2a5a00eb69576a4c05385"
+  },
+  "email": "sinem.erisken@gmail.com",
+  "root": "/Users/oshun/Documents/GitHub/bimpala_modulararithmetic/Bimpala_ModularArithmetic",
+  "host": "Hyrule.local",
+  "executable": "/Users/oshun/Documents/GitHub/bimpala_modulararithmetic/Bimpala_ModularArithmetic/.venv/bin/python",
+  "writerId": "f5il9fdtpb7kt5gjkery2x442bgn8id4"
+}

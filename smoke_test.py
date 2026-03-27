@@ -101,7 +101,7 @@ check("decode(encode(t)) == t for all t in Z_q", _round_trip)
 # ══════════════════════════════════════════════════════════════════════════════
 print("\n── 3. Loss ──────────────────────────────────────────────────────────")
 
-pred_xy = torch.randn(BATCH, 2)
+pred_xy = torch.randn(BATCH, 2, requires_grad=True)
 b_rand  = torch.randint(0, Q, (BATCH,))
 
 def _loss_check():
@@ -174,51 +174,58 @@ def _mini_train():
     from einops import rearrange
     import math
 
-    model = ReluModular(input_dim=2 * N, output_dim=2).to(DEVICE)
-    opt   = torch.optim.Adam(model.parameters(), lr=3e-5)
-
     a_tr, b_tr = generate_dataset(N, Q, N_TRAIN, sampling="inv_sqrt")
     a_te, b_te = generate_test_set(N, Q, num_samples=N_TEST)
 
-    run = wandb.init(
-        entity=os.environ.get("WANDB_ENTITY", "narmal"),
-        project=os.environ.get("WANDB_PROJECT", "bilinearLSTM"),
-        name="smoke-mini-train",
-        config={"N": N, "q": Q, "smoke": True},
-        tags=["smoke-test"],
-    )
+    candidates = [
+        (ReluModular,            "smoke-mini-relu"),
+        (SemiBilinearModular,    "smoke-mini-semi-bilinear"),
+        (StrictlyBilinearModular,"smoke-mini-strictly-bilinear"),
+    ]
 
-    model.train()
-    for epoch in range(1, N_EPOCHS + 1):
-        perm   = torch.randperm(N_TRAIN)
-        a_shuf = a_tr[perm]
-        b_shuf = b_tr[perm]
-        for start in range(0, N_TRAIN, BATCH):
-            a_b = a_shuf[start:start + BATCH].to(DEVICE)
-            b_b = b_shuf[start:start + BATCH].to(DEVICE)
-            x   = rearrange(encode(a_b, Q), "b n two -> b (n two)")
-            out = model(x)
-            loss = modular_loss(out, b_b, Q)
-            opt.zero_grad(set_to_none=True)
-            loss.backward()
-            opt.step()
-            wandb.log({"mini/batch_loss": loss.item()})
+    for ModelCls, run_name in candidates:
+        model = ModelCls(input_dim=2 * N, output_dim=2).to(DEVICE)
+        opt   = torch.optim.Adam(model.parameters(), lr=3e-5)
 
-        # eval
-        model.eval()
-        with torch.no_grad():
-            x_te  = rearrange(encode(a_te.to(DEVICE), Q), "b n two -> b (n two)")
-            p_xy  = model(x_te)
-            p_s   = decode(p_xy, Q)
-            t_xy  = encode(b_te.to(DEVICE), Q)
-            mse   = angle_mse(p_xy, t_xy)
-            acc   = tau_accuracy(p_s, b_te.to(DEVICE), Q, tau=0.01)
-        wandb.log({"mini/epoch": epoch, "mini/mse": mse, "mini/tau_1pct": acc})
+        run = wandb.init(
+            entity=os.environ.get("WANDB_ENTITY", "narmal"),
+            project=os.environ.get("WANDB_PROJECT", "bilinearLSTM"),
+            name=run_name,
+            config={"N": N, "q": Q, "model": ModelCls.__name__, "smoke": True},
+            tags=["smoke-test"],
+        )
+
         model.train()
+        for epoch in range(1, N_EPOCHS + 1):
+            perm   = torch.randperm(N_TRAIN)
+            a_shuf = a_tr[perm]
+            b_shuf = b_tr[perm]
+            for start in range(0, N_TRAIN, BATCH):
+                a_b = a_shuf[start:start + BATCH].to(DEVICE)
+                b_b = b_shuf[start:start + BATCH].to(DEVICE)
+                x   = rearrange(encode(a_b, Q), "b n two -> b (n two)")
+                out = model(x)
+                loss = modular_loss(out, b_b, Q)
+                opt.zero_grad(set_to_none=True)
+                loss.backward()
+                opt.step()
+                wandb.log({"mini/batch_loss": loss.item()})
 
-    run.finish()
+            # eval
+            model.eval()
+            with torch.no_grad():
+                x_te  = rearrange(encode(a_te.to(DEVICE), Q), "b n two -> b (n two)")
+                p_xy  = model(x_te)
+                p_s   = decode(p_xy, Q)
+                t_xy  = encode(b_te.to(DEVICE), Q)
+                mse   = angle_mse(p_xy, t_xy)
+                acc   = tau_accuracy(p_s, b_te.to(DEVICE), Q, tau=0.01)
+            wandb.log({"mini/epoch": epoch, "mini/mse": mse, "mini/tau_1pct": acc})
+            model.train()
 
-check("mini training loop (2 epochs × 10 batches, ReluModular)", _mini_train)
+        run.finish()
+
+check("mini training loop (2 epochs × 10 batches, all 3 models)", _mini_train)
 
 # ══════════════════════════════════════════════════════════════════════════════
 print("\n\033[92mAll checks passed — safe to move to cloud.\033[0m\n")
