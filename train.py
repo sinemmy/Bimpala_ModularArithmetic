@@ -35,7 +35,8 @@ _wandb_key = os.environ.get("WANDB_KEY")
 if _wandb_key:
     wandb.login(key=_wandb_key, relogin=False)
 
-DEFAULT_WANDB_PROJECT = "bimpala-modular-arithmetic"
+DEFAULT_WANDB_ENTITY  = "narmal"
+DEFAULT_WANDB_PROJECT = "bilinearLSTM"
 
 from src.data import generate_dataset, generate_test_set
 from src.embedding import decode, encode
@@ -113,8 +114,9 @@ def train(args: argparse.Namespace) -> nn.Module:
 
     # ── W&B run ────────────────────────────────────────────────────────────────
     run = wandb.init(
+        entity=args.wandb_entity,     # None → your default wandb account
         project=args.wandb_project,
-        name=args.wandb_run_name,   # None → wandb auto-generates a name
+        name=args.wandb_run_name,     # None → wandb auto-generates a name
         config={
             "N":               args.N,
             "q":               args.q,
@@ -300,6 +302,10 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--checkpoint-dir", type=str, default="checkpoints",
         help="Directory in which to save the best checkpoint.",
+    )
+    parser.add_argument(
+        "--wandb-entity", type=str, default=DEFAULT_WANDB_ENTITY,
+        help="W&B entity (username or team name). Defaults to your wandb account.",
     )
     parser.add_argument(
         "--wandb-project", type=str, default=DEFAULT_WANDB_PROJECT,

@@ -153,7 +153,8 @@ print("\n── 6. W&B logging ────────────────�
 
 def _wandb_check():
     run = wandb.init(
-        project="bimpala-modular-arithmetic",
+        entity=os.environ.get("WANDB_ENTITY", "narmal"),
+        project=os.environ.get("WANDB_PROJECT", "bilinearLSTM"),
         name="smoke-test",
         config={"N": N, "q": Q, "smoke": True},
         tags=["smoke-test"],
@@ -180,7 +181,8 @@ def _mini_train():
     a_te, b_te = generate_test_set(N, Q, num_samples=N_TEST)
 
     run = wandb.init(
-        project="bimpala-modular-arithmetic",
+        entity=os.environ.get("WANDB_ENTITY", "narmal"),
+        project=os.environ.get("WANDB_PROJECT", "bilinearLSTM"),
         name="smoke-mini-train",
         config={"N": N, "q": Q, "smoke": True},
         tags=["smoke-test"],
