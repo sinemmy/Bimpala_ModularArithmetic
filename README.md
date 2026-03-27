@@ -134,6 +134,57 @@ WANDB_PROJECT=bilinearLSTM # optional override for smoke_test
 
 ---
 
+## Vast.ai quickstart
+
+### 1. Rent an instance
+- Template: **PyTorch (Vast)** — `vastai/pytorch`
+- GPU: any with ≥ 8 GB VRAM (RTX 2080 Ti / A4000 or better)
+- CUDA: ≥ 12.1
+- Container size: **30 GB**, no volume needed (checkpoints go to W&B)
+
+### 2. Add your SSH key
+Account → SSH Keys → paste contents of `~/.ssh/your_key.pub`
+
+### 3. Add the instance to ~/.ssh/config (on your local machine)
+```
+Host vastai
+    HostName <IP from Connect page>
+    Port <PORT from Connect page>
+    User root
+    IdentityFile ~/.ssh/your_key
+```
+Then connect with `ssh vastai` or via VSCode Remote-SSH.
+
+### 4. Set up the repo (on the remote, inside the auto-started tmux session)
+```bash
+# Vast auto-starts tmux — you're already protected from disconnects
+# Check if uv is available
+which uv || curl -LsSf https://astral.sh/uv/install.sh | sh && source $HOME/.local/bin/env
+
+git clone https://github.com/<your-username>/Bimpala_ModularArithmetic
+cd Bimpala_ModularArithmetic
+uv sync
+echo "WANDB_KEY=<your_key>" > .env
+```
+
+### 5. Verify and train
+```bash
+# Sanity check
+uv run python -c "import torch; print(torch.cuda.get_device_name(0))"
+uv run python smoke_test.py
+
+# Kick off a run (stays alive if you disconnect — tmux handles it)
+uv run python train.py --N 16 --q 257 --model src.models.relu_modular.ReluModular --wandb-run-name relu-N16-q257
+```
+
+### 6. Detach / reattach tmux
+| Action | Keys |
+|---|---|
+| Detach (leave training running) | `Ctrl+B` then `D` |
+| Reattach after reconnecting | `tmux attach` |
+
+---
+
 ## Adding a new model
 1. Create `src/models/my_model.py` with a class that accepts `__init__(self, input_dim, output_dim)` and implements `forward(x: Tensor[batch, input_dim]) → Tensor[batch, 2]`.
 2. Pass it to the training script: `--model src.models.my_model.MyModel`.
