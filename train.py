@@ -124,8 +124,9 @@ def train(args: argparse.Namespace) -> nn.Module:
             "batch_size":      BATCH_SIZE,
             "distinct_samples": DISTINCT_SAMPLES,
             "total_budget":    TOTAL_BUDGET,
-            "lr":              LR,
-            "warmup_steps":    WARMUP_STEPS,
+            "lr":              args.lr,
+            "warmup_steps":    args.warmup_steps,
+            "grad_clip":       args.grad_clip,
             "sampling":        "inv_sqrt",
             "device":          args.device,
         },
@@ -138,6 +139,10 @@ def train(args: argparse.Namespace) -> nn.Module:
     print(f"Model: {args.model}  ({n_params:,} parameters)")
     wandb.run.summary["n_params"] = n_params
 
+    # Compile for ~20-40% speedup (PyTorch 2.x, silently skipped if unavailable)
+    if hasattr(torch, "compile"):
+        model = torch.compile(model)
+
     # ── Data ───────────────────────────────────────────────────────────────────
     print(
         f"Generating {DISTINCT_SAMPLES:,} training samples "
@@ -145,8 +150,9 @@ def train(args: argparse.Namespace) -> nn.Module:
     )
     a_train, b_train = generate_dataset(
         args.N, args.q, DISTINCT_SAMPLES, sampling="inv_sqrt"
-    )
-
+    )    # Pin memory for faster async CPU→GPU transfers
+    a_train = a_train.pin_memory()
+    b_train = b_train.pin_memory()
     print(f"Generating {TEST_SIZE:,} test samples (default sampling, seed=42)…")
     a_test, b_test = generate_test_set(args.N, args.q, num_samples=TEST_SIZE)
 
@@ -155,19 +161,19 @@ def train(args: argparse.Namespace) -> nn.Module:
     steps_per_epoch = math.ceil(DISTINCT_SAMPLES / BATCH_SIZE)   # 40,000
     total_steps     = epochs * steps_per_epoch                   # 400,000
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
-    # Linear warm-up: lr scales from LR * 1e-3 → LR over WARMUP_STEPS steps.
+    # Linear warm-up: lr scales from LR * 1e-3 → LR over warmup_steps steps.
     warmup_sched = torch.optim.lr_scheduler.LinearLR(
         optimizer,
         start_factor=1e-3,
         end_factor=1.0,
-        total_iters=WARMUP_STEPS,
+        total_iters=args.warmup_steps,
     )
     # Cosine decay: LR → 0 over the remaining steps.
     cosine_sched = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer,
-        T_max=total_steps - WARMUP_STEPS,
+        T_max=total_steps - args.warmup_steps,
         eta_min=0.0,
     )
     scheduler = torch.optim.lr_scheduler.SequentialLR(
@@ -200,15 +206,18 @@ def train(args: argparse.Namespace) -> nn.Module:
             leave=False,
         )
         for start in pbar:
-            a_b = a_shuf[start : start + BATCH_SIZE].to(device)
-            b_b = b_shuf[start : start + BATCH_SIZE].to(device)
+            a_b = a_shuf[start : start + BATCH_SIZE].to(device, non_blocking=True)
+            b_b = b_shuf[start : start + BATCH_SIZE].to(device, non_blocking=True)
 
-            x       = _embed(a_b, args.q)       # (batch, 2*N)
-            pred_xy = model(x)                   # (batch, 2)
-            loss    = modular_loss(pred_xy, b_b, args.q)
+            with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=device.type == "cuda"):
+                x       = _embed(a_b, args.q)       # (batch, 2*N)
+                pred_xy = model(x)                   # (batch, 2)
+                loss    = modular_loss(pred_xy, b_b, args.q)
 
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
+            if args.grad_clip > 0:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
             optimizer.step()
             scheduler.step()
 
@@ -314,6 +323,18 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--checkpoint-dir", type=str, default="checkpoints",
         help="Directory in which to save the best checkpoint.",
+    )
+    parser.add_argument(
+        "--lr", type=float, default=LR,
+        help="Peak learning rate for Adam (default: 3e-5).",
+    )
+    parser.add_argument(
+        "--warmup-steps", type=int, default=WARMUP_STEPS,
+        help="Number of linear warmup steps before cosine decay (default: 1000).",
+    )
+    parser.add_argument(
+        "--grad-clip", type=float, default=0.0,
+        help="Max gradient norm for clipping. 0 = disabled (default: 0).",
     )
     parser.add_argument(
         "--wandb-entity", type=str, default=DEFAULT_WANDB_ENTITY,
