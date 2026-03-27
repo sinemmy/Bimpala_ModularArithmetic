@@ -191,6 +191,7 @@ def train(args: argparse.Namespace) -> nn.Module:
 
         running_loss = 0.0
         n_batches    = 0
+        EVAL_EVERY   = 5_000   # log eval metrics mid-epoch every N batches
 
         pbar = tqdm(
             range(0, DISTINCT_SAMPLES, BATCH_SIZE),
@@ -219,6 +220,17 @@ def train(args: argparse.Namespace) -> nn.Module:
                 lr=f"{current_lr:.2e}",
             )
             wandb.log({"batch/loss": loss.item(), "batch/lr": current_lr})
+
+            # ── Mid-epoch eval ──────────────────────────────────────────────
+            if n_batches % EVAL_EVERY == 0:
+                metrics = _evaluate(model, a_test, b_test, args.q, device)
+                wandb.log({
+                    "eval/train_loss": running_loss / n_batches,
+                    "eval/mse":        metrics["mse"],
+                    "eval/tau_0.5pct": metrics["tau_05"],
+                    "eval/tau_1pct":   metrics["tau_1"],
+                })
+                model.train()
 
         avg_loss = running_loss / n_batches
 
