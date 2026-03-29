@@ -118,6 +118,7 @@ cd bimpala_modulararithmetic/Bimpala_ModularArithmetic
 
 # 5. Create venv and install dependencies
 uv sync
+source .venv/bin/activate
 
 # 6. Set up your W&B key
 echo "WANDB_KEY=your_key_here" > .env
