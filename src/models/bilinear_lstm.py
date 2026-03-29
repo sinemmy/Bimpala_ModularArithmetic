@@ -24,31 +24,42 @@ class BilinearLSTMCell(nn.Module):
         h = o * tanh(c)
 
     Bilinear LSTM:
-        [i,f,g,o] = W1([x,h]) * W2([x,h])   (element-wise)
+        i = W_ia([x,h]) * W_ib([x,h])
+        f = W_fa([x,h]) * W_fb([x,h])
+        g = W_ga([x,h]) * W_gb([x,h])
+        o = W_oa([x,h]) * W_ob([x,h])
         c = f*c + i*g
-        h = o * (W3(c) * W4(c))              (bilinear readout)
+        h = o * (W_ca(c) * W_cb(c))
     """
 
     def __init__(self, input_size: int, hidden_size: int):
         super().__init__()
         self.hidden_size = hidden_size
         combined = input_size + hidden_size
-        # Two linear projections for the 4 gates (packed)
-        self.transform = nn.Linear(combined, 4 * hidden_size, bias=False)
-        self.gate = nn.Linear(combined, 4 * hidden_size, bias=False)
+        # Each gate has its own bilinear pair
+        self.i_a = nn.Linear(combined, hidden_size, bias=False)
+        self.i_b = nn.Linear(combined, hidden_size, bias=False)
+        self.f_a = nn.Linear(combined, hidden_size, bias=False)
+        self.f_b = nn.Linear(combined, hidden_size, bias=False)
+        self.g_a = nn.Linear(combined, hidden_size, bias=False)
+        self.g_b = nn.Linear(combined, hidden_size, bias=False)
+        self.o_a = nn.Linear(combined, hidden_size, bias=False)
+        self.o_b = nn.Linear(combined, hidden_size, bias=False)
         # Bilinear readout of cell state (replaces tanh(c))
-        self.cell_transform = nn.Linear(hidden_size, hidden_size, bias=False)
-        self.cell_gate = nn.Linear(hidden_size, hidden_size, bias=False)
+        self.c_a = nn.Linear(hidden_size, hidden_size, bias=False)
+        self.c_b = nn.Linear(hidden_size, hidden_size, bias=False)
 
     def forward(
         self, x: torch.Tensor, hc: tuple[torch.Tensor, torch.Tensor]
     ) -> tuple[torch.Tensor, torch.Tensor]:
         h, c = hc
         combined = torch.cat([x, h], dim=1)
-        bilinear = self.transform(combined) * self.gate(combined)
-        i, f, g, o = bilinear.chunk(4, dim=1)
+        i = self.i_a(combined) * self.i_b(combined)
+        f = self.f_a(combined) * self.f_b(combined)
+        g = self.g_a(combined) * self.g_b(combined)
+        o = self.o_a(combined) * self.o_b(combined)
         c_new = f * c + i * g
-        h_new = o * (self.cell_transform(c_new) * self.cell_gate(c_new))
+        h_new = o * (self.c_a(c_new) * self.c_b(c_new))
         return h_new, c_new
 
 
