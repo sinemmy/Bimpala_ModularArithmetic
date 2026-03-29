@@ -115,7 +115,7 @@ source ~/.cargo/env
 
 # 4. Clone the repo
 git clone -b attempt2 https://github.com/sinemmy/bimpala_modulararithmetic.git
-cd bimpala_modulararithmetic/bimpala_modulararithmetic
+cd bimpala_modulararithmetic
 
 # 5. Create venv and install dependencies
 uv sync
