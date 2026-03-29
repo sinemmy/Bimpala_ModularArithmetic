@@ -99,6 +99,37 @@ python train.py \
   --wandb-run-name my_run
 ```
 
+## Cloud Quick Start (Vast.ai / Lambda / etc.)
+
+```bash
+# 1. SSH into your instance
+ssh root@<your-instance-ip> -p <port>
+
+# 2. Install uv (if not already available)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+source ~/.cargo/env
+
+# 3. Clone the repo
+git clone 
+git clone -b attempt2 https://github.com/sinemmy/bimpala_modulararithmetic.git
+cd bimpala_modulararithmetic/Bimpala_ModularArithmetic
+
+# 4. Create venv and install dependencies
+uv sync
+
+# 5. Set up your W&B key
+echo "WANDB_KEY=your_key_here" > .env
+
+# 6. Run smoke test
+uv run python smoke_test.py
+
+# 7. Train
+uv run python train.py --model vanilla_lstm --p 113 --device cuda
+uv run python train.py --model bilinear_lstm --p 113 --device cuda
+```
+
+**GPU requirements**: Any GPU with 2+ GB VRAM. The dataset is ~200KB and the model is ~67K params — this is a very lightweight workload.
+
 ## Project Structure
 
 ```
