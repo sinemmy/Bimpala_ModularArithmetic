@@ -155,6 +155,19 @@ def train(args: argparse.Namespace):
                     ckpt_dir / f"{run_name}_best.pt",
                 )
 
+            if args.save_every > 0 and epoch % args.save_every == 0:
+                ckpt_dir = Path("checkpoints")
+                ckpt_dir.mkdir(exist_ok=True)
+                torch.save(
+                    {
+                        "model_state_dict": model.state_dict(),
+                        "args": vars(args),
+                        "epoch": epoch,
+                        "test_acc": test_acc,
+                    },
+                    ckpt_dir / f"{run_name}_epoch{epoch:06d}.pt",
+                )
+
             print(
                 f"[{epoch:>6d}/{args.epochs}]  "
                 f"train_loss={train_loss:.4f}  train_acc={train_acc:.4f}  "
@@ -211,6 +224,8 @@ def _parse_args() -> argparse.Namespace:
                         help="W&B project name")
     parser.add_argument("--wandb-run-name", type=str, default=None,
                         help="W&B run name (auto-generated if omitted)")
+    parser.add_argument("--save-every", type=int, default=0,
+                        help="Also save a checkpoint every N epochs (0 = off; best+final always saved)")
     return parser.parse_args()
 
 

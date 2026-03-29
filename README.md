@@ -40,6 +40,8 @@ All sigmoid/tanh nonlinearities replaced with bilinear products:
 
 No nonlinearities of any kind — the entire model is a polynomial function of its inputs.
 
+**Initialization**: the `b`-branch of each bilinear pair is initialized with zero weights and bias=1, so each gate starts as a plain linear map (`W_a(x) * 1 = W_a(x)`). This avoids the vanishing-gradient-at-init problem that arises when two near-zero branches are multiplied together.
+
 ## Training
 
 - **Optimizer**: AdamW (lr=1e-3, weight_decay=0.01)
@@ -93,10 +95,32 @@ python train.py \
   --grad-clip 0.0 \
   --seed 42 \
   --log-every 50 \
+  --save-every 1000 \
   --device cuda \
   --wandb-entity your_entity \
   --wandb-project modular-arithmetic \
   --wandb-run-name my_run
+```
+
+## Checkpoints
+
+Two checkpoints are always saved by default:
+
+| File | When |
+|---|---|
+| `checkpoints/<run_name>_best.pt` | Whenever test accuracy improves (overwrites previous best) |
+| `checkpoints/<run_name>.pt` | Once at the end of training; also uploaded to W&B as an artifact |
+
+Use `--save-every N` to additionally save a snapshot every N epochs (e.g. `--save-every 1000` produces `_epoch001000.pt`, `_epoch002000.pt`, …). Note: snapshots are only written at eval steps, so N should be a multiple of `--log-every` (default 50).
+
+To download a completed run's checkpoint from W&B:
+```bash
+wandb artifact get <entity>/<project>/<run_name>:latest --root ./checkpoints
+```
+
+To copy a checkpoint off a live Vast.ai instance:
+```bash
+scp -i ~/.ssh/vast_ai_key -P <PORT> root@<IP>:~/checkpoints/<run_name>_best.pt .
 ```
 
 ## Cloud Quick Start (Vast.ai / Lambda / etc.)
