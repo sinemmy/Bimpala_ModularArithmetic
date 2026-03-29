@@ -17,6 +17,10 @@ import torch.nn as nn
 import wandb
 from dotenv import load_dotenv
 
+DEFAULT_WANDB_ENTITY  = "narmal"
+DEFAULT_WANDB_PROJECT = "bilinearLSTM"
+
+
 sys.path.insert(0, str(Path(__file__).parent))
 
 load_dotenv(Path(__file__).parent / ".env")
@@ -172,9 +176,9 @@ def _parse_args() -> argparse.Namespace:
                         help="Evaluate and print metrics every N epochs")
     parser.add_argument("--device", type=str,
                         default="cuda" if torch.cuda.is_available() else "cpu")
-    parser.add_argument("--wandb-entity", type=str, default=None,
+    parser.add_argument("--wandb-entity", type=str, default=DEFAULT_WANDB_ENTITY,
                         help="W&B entity (username or team)")
-    parser.add_argument("--wandb-project", type=str, default="modular-arithmetic",
+    parser.add_argument("--wandb-project", type=str, default=DEFAULT_WANDB_PROJECT,
                         help="W&B project name")
     parser.add_argument("--wandb-run-name", type=str, default=None,
                         help="W&B run name (auto-generated if omitted)")
