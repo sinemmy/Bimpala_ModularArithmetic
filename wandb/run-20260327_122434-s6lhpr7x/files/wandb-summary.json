@@ -1,1 +1,0 @@
-{"best_tau_05":0.1,"_wandb":{"runtime":0},"_step":1,"batch/loss":1.23,"_runtime":0,"batch/lr":3e-05,"epoch/tau_1pct":0.2,"epoch":1,"_timestamp":1.774632275030164e+09,"epoch/mse":0.5,"epoch/train_loss":1,"epoch/tau_0.5pct":0.1}
