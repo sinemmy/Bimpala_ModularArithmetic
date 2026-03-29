@@ -114,7 +114,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 source ~/.cargo/env
 
 # 4. Clone the repo
-git clone -b attempt2 https://github.com/sinemmy/bimpala_modulararithmetic.git
+git clone https://github.com/sinemmy/bimpala_modulararithmetic.git
 cd bimpala_modulararithmetic
 
 # 5. Create venv and install dependencies
