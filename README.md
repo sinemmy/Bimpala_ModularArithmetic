@@ -105,28 +105,47 @@ python train.py \
 # 1. SSH into your instance
 ssh root@<your-instance-ip> -p <port>
 
-# 2. Install uv (if not already available)
+# 2. Start a tmux session (so training survives disconnects)
+tmux new -s train
+
+# 3. Install uv (if not already available)
 curl -LsSf https://astral.sh/uv/install.sh | sh
 source ~/.cargo/env
 
-# 3. Clone the repo
-git clone 
+# 4. Clone the repo
 git clone -b attempt2 https://github.com/sinemmy/bimpala_modulararithmetic.git
 cd bimpala_modulararithmetic/Bimpala_ModularArithmetic
 
-# 4. Create venv and install dependencies
+# 5. Create venv and install dependencies
 uv sync
 
-# 5. Set up your W&B key
+# 6. Set up your W&B key
 echo "WANDB_KEY=your_key_here" > .env
 
-# 6. Run smoke test
+# 7. Run smoke test
 uv run python smoke_test.py
 
-# 7. Train
+# 8. Train (inside tmux — safe to disconnect)
 uv run python train.py --model vanilla_lstm --p 113 --device cuda
 uv run python train.py --model bilinear_lstm --p 113 --device cuda
 ```
+
+### tmux cheat sheet
+
+| Action | Command |
+|---|---|
+| New session | `tmux new -s name` |
+| Detach (leave running) | `Ctrl-b` then `d` |
+| List sessions | `tmux ls` |
+| Reattach | `tmux attach -t name` |
+| Kill session | `tmux kill-session -t name` |
+| New window | `Ctrl-b` then `c` |
+| Next window | `Ctrl-b` then `n` |
+| Previous window | `Ctrl-b` then `p` |
+| Split horizontal | `Ctrl-b` then `"` |
+| Split vertical | `Ctrl-b` then `%` |
+| Switch pane | `Ctrl-b` then arrow key |
+| Scroll mode | `Ctrl-b` then `[` (then `q` to exit) |
 
 **GPU requirements**: Any GPU with 2+ GB VRAM. The dataset is ~200KB and the model is ~67K params — this is a very lightweight workload.
 
