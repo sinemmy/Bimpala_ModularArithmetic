@@ -103,7 +103,7 @@ python train.py \
 
 ```bash
 # 1. SSH into your instance
-ssh root@<your-instance-ip> -p <port>
+ssh -i <key> root@<your-instance-ip> -p <port>
 
 # 2. Start a tmux session (so training survives disconnects)
 tmux new -s train

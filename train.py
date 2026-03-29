@@ -48,10 +48,11 @@ def train(args: argparse.Namespace):
     device = torch.device(args.device)
 
     # ── W&B ────────────────────────────────────────────────────────────────────
+    run_name = args.wandb_run_name or f"{args.model}_p{args.p}_h{args.hidden_size}"
     run = wandb.init(
         entity=args.wandb_entity,
         project=args.wandb_project,
-        name=args.wandb_run_name,
+        name=run_name,
         config=vars(args),
     )
 
