@@ -105,6 +105,7 @@ python train.py \
 # 1. SSH into your instance
 ssh -i <key> root@<your-instance-ip> -p <port>
 
+
 # 2. Start a tmux session (so training survives disconnects)
 tmux new -s train
 
@@ -114,7 +115,7 @@ source ~/.cargo/env
 
 # 4. Clone the repo
 git clone -b attempt2 https://github.com/sinemmy/bimpala_modulararithmetic.git
-cd bimpala_modulararithmetic/Bimpala_ModularArithmetic
+cd bimpala_modulararithmetic/bimpala_modulararithmetic
 
 # 5. Create venv and install dependencies
 uv sync
