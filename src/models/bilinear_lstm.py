@@ -36,18 +36,31 @@ class BilinearLSTMCell(nn.Module):
         super().__init__()
         self.hidden_size = hidden_size
         combined = input_size + hidden_size
-        # Each gate has its own bilinear pair
+        # Each gate has its own bilinear pair (a = learnable transform, b = modulator)
         self.i_a = nn.Linear(combined, hidden_size, bias=False)
-        self.i_b = nn.Linear(combined, hidden_size, bias=False)
+        self.i_b = nn.Linear(combined, hidden_size, bias=True)
         self.f_a = nn.Linear(combined, hidden_size, bias=False)
-        self.f_b = nn.Linear(combined, hidden_size, bias=False)
+        self.f_b = nn.Linear(combined, hidden_size, bias=True)
         self.g_a = nn.Linear(combined, hidden_size, bias=False)
-        self.g_b = nn.Linear(combined, hidden_size, bias=False)
+        self.g_b = nn.Linear(combined, hidden_size, bias=True)
         self.o_a = nn.Linear(combined, hidden_size, bias=False)
-        self.o_b = nn.Linear(combined, hidden_size, bias=False)
+        self.o_b = nn.Linear(combined, hidden_size, bias=True)
         # Bilinear readout of cell state (replaces tanh(c))
         self.c_a = nn.Linear(hidden_size, hidden_size, bias=False)
-        self.c_b = nn.Linear(hidden_size, hidden_size, bias=False)
+        self.c_b = nn.Linear(hidden_size, hidden_size, bias=True)
+        self._init_b_branches()
+
+    def _init_b_branches(self):
+        """Initialize b-branches so gates start as plain linear maps.
+
+        At init: W_b(x) = 0*x + 1 = 1, so W_a(x) * W_b(x) = W_a(x).
+        This avoids the O(eps^2) vanishing-at-init problem from two
+        near-zero branches being multiplied together.
+        """
+        for name in ("i_b", "f_b", "g_b", "o_b", "c_b"):
+            layer = getattr(self, name)
+            nn.init.zeros_(layer.weight)
+            nn.init.ones_(layer.bias)
 
     def forward(
         self, x: torch.Tensor, hc: tuple[torch.Tensor, torch.Tensor]

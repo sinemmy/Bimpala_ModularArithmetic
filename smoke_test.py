@@ -107,6 +107,12 @@ for name, cls in [("VanillaLSTM", VanillaLSTM), ("BilinearLSTM", BilinearLSTM)]:
         if all(p.grad is not None for p in m.parameters())
         else 1 / 0,
     )
+    check(
+        f"{name} grads non-zero",
+        lambda m=model: None
+        if all(p.grad.abs().max().item() > 1e-9 for p in m.parameters() if p.grad is not None)
+        else 1 / 0,
+    )
 
 # ── 4. Mini training loop ─────────────────────────────────────────────────────
 print("\n── 4. Mini training loop ────────────────────────────────────────────")
@@ -129,6 +135,23 @@ for name, cls in [("VanillaLSTM", VanillaLSTM), ("BilinearLSTM", BilinearLSTM)]:
     check(
         f"{name} loss is finite: {final_loss:.4f}",
         lambda fl=final_loss: None if torch.isfinite(torch.tensor(fl)) else 1 / 0,
+    )
+
+# ── 5. BilinearLSTM b-branch init ─────────────────────────────────────────────
+print("\n── 5. BilinearLSTM b-branch init ────────────────────────────────────")
+
+from src.models.bilinear_lstm import BilinearLSTMCell
+
+cell = BilinearLSTMCell(input_size=2, hidden_size=HIDDEN)
+for branch in ("i_b", "f_b", "g_b", "o_b", "c_b"):
+    layer = getattr(cell, branch)
+    check(
+        f"{branch}.weight == 0 (no squashing at init)",
+        lambda l=layer: None if l.weight.abs().max().item() == 0.0 else 1 / 0,
+    )
+    check(
+        f"{branch}.bias == 1 (identity modulator at init)",
+        lambda l=layer: None if (l.bias - 1.0).abs().max().item() < 1e-6 else 1 / 0,
     )
 
 print("\n── All checks passed ────────────────────────────────────────────────\n")
