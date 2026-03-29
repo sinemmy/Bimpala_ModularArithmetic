@@ -143,6 +143,17 @@ def train(args: argparse.Namespace):
                 best_test_acc = test_acc
                 wandb.run.summary["best_test_acc"] = best_test_acc
                 wandb.run.summary["best_test_acc_epoch"] = epoch
+                ckpt_dir = Path("checkpoints")
+                ckpt_dir.mkdir(exist_ok=True)
+                torch.save(
+                    {
+                        "model_state_dict": model.state_dict(),
+                        "args": vars(args),
+                        "epoch": epoch,
+                        "best_test_acc": best_test_acc,
+                    },
+                    ckpt_dir / f"{run_name}_best.pt",
+                )
 
             print(
                 f"[{epoch:>6d}/{args.epochs}]  "
@@ -150,6 +161,23 @@ def train(args: argparse.Namespace):
                 f"test_loss={test_loss:.4f}  test_acc={test_acc:.4f}  "
                 f"grad_norm={avg_grad_norm:.4f}  weight_norm={w_norm:.4f}"
             )
+
+    # ── Save final checkpoint locally and upload to W&B ───────────────────────
+    ckpt_dir = Path("checkpoints")
+    ckpt_dir.mkdir(exist_ok=True)
+    ckpt_path = ckpt_dir / f"{run_name}.pt"
+    torch.save(
+        {
+            "model_state_dict": model.state_dict(),
+            "args": vars(args),
+            "best_test_acc": best_test_acc,
+        },
+        ckpt_path,
+    )
+    artifact = wandb.Artifact(name=run_name, type="model")
+    artifact.add_file(str(ckpt_path))
+    run.log_artifact(artifact)
+    print(f"Checkpoint saved to {ckpt_path} and uploaded to W&B.")
 
     print(f"Done. Best test acc: {best_test_acc:.4f}")
     run.finish()
